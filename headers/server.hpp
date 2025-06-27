@@ -3,6 +3,9 @@
 
 #include <iostream>
 #include <sys/types.h>
+#include <vector>
+#include <map>
+#include "client.hpp"
 #include <poll.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -10,17 +13,17 @@
 
 class Server
 {
-    private:
-    int socket_fd;
-    int port;
-    std::string password;
-    std::vector<Clients> clients;
-    std::vector<struct pollfd> poll_fd;
+	private:
+	int socket_fd;
+	int port;
+	std::string password;
+	std::vector<struct pollfd> poll_fds;
+	std::map<int, Client>clients;
 
-    public:
-    Server(int port, std::string password);
-    ~Server();
-    void    init_socket();
+	public:
+	Server(int port, std::string password);
+	~Server();
+	void    init_socket();
 };
 
 #endif
