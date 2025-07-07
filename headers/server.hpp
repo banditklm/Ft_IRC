@@ -2,6 +2,7 @@
 #define SERVER_HPP
 
 #include <iostream>
+#include <sstream>
 #include <sys/types.h>
 #include <vector>
 #include <map>
@@ -24,9 +25,12 @@ class Server
 	std::map<int, Client>clients;
 
 	public:
-	Server(int port, std::string password);
+	std::string	name;
+	Server(int port);
 	~Server();
 	void    init_socket();
+	void	handle_line(Client c, std::string line);
+	// void	error_reply(int fd_client, const std::string& )
 };
 
 #endif

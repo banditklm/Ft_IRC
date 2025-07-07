@@ -27,3 +27,8 @@ void    Client::set_user(std::string username)
     this->username = username;
     has_user = true;
 }
+
+void    Client::set_pass(std::string password)
+{
+    this->password = password;
+}

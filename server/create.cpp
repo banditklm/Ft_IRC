@@ -1,21 +1,74 @@
 #include "../headers/server.hpp"
 #include "../headers/client.hpp"
 
-void	parse_line(line)
+void	welcome_msg(Client c)
 {
-	
+
 }
 
-void	handle_buff_line(char *buff)
+void	Server::handle_line(Client c, std::string line)
+{
+	std::stringstream	ss;
+	ss << line;
+	std::string	cmd;
+	std::string	pass;
+	std::string	user;
+	std::string	nick;
+	ss >> cmd;
+	if (cmd == "PASS")
+	{
+		ss >> pass;
+		if (pass.empty())
+		{
+			std::cout << "ERR_NEEDMOREPARAMS" << std::endl;
+			return;
+		}
+		c.set_pass(pass);
+	}
+	else if (cmd == "NICK")
+	{
+		ss >> nick;
+		if (nick.empty())
+		{
+			std::cout << "ERR_NEEDMOREPARAMS" << std::endl;
+			return;
+		}
+		c.set_nick(nick);
+		c.has_nick = true;
+	}
+	else if (cmd == "USER")
+	{
+		ss >> user;
+		if (user.empty())
+		{
+			std::cout << "ERR_NEEDMOREPARAMS" << std::endl;
+			return;
+		}
+		c.set_user(user);
+		c.has_user = true;
+	}
+	// else
+	// {
+		// handle other commands
+	// }
+	if (c.has_nick && c.has_user && !c.registered)
+	{
+		c.registered = true;
+		welcome_msg(c);
+	}
+	else if (c.registered)
+		std::cout << "ERR_ALREADYREGISTRED" << std::endl;
+}
+
+void	handle_buff_line(std::string buff)
 {
 	std::string	del = "\r\n";
 	size_t		pos;
 
-	while ((pos = buff.find(del)) != std::strin::npos)
+	while ((pos = buff.find(del)) != std::string::npos)
 	{
 		std::string line = buff.substr(0, pos);
 		buff.erase(0, pos + del.length());
-		parse_line(line);
 	}
 }
 
@@ -101,3 +154,4 @@ void    Server::init_socket()
 		}
 	}
 }
+

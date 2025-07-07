@@ -7,22 +7,23 @@
 
 class Client
 {
-	private :
+	public :
 	int			fd;
 	std::string	nickname;
 	std::string	username;
+	std::string	password;
 	std::string buffer;
 	bool		has_nick;
 	bool		has_user;
 	bool		registered;
 	std::vector<std::string> joinedChannels;
 
-	public :
 	Client();
 	Client(int fd);
 	~Client();
 	void	set_nick(std::string nickname);
 	void	set_user(std::string username);
+	void	set_pass(std::string password);
 	
 };
 
