@@ -12,6 +12,8 @@ class Client
 	std::string	nickname;
 	std::string	username;
 	std::string buffer;
+	bool		has_nick;
+	bool		has_user;
 	bool		registered;
 	std::vector<std::string> joinedChannels;
 
@@ -19,6 +21,8 @@ class Client
 	Client();
 	Client(int fd);
 	~Client();
+	void	set_nick(std::string nickname);
+	void	set_user(std::string username);
 	
 };
 

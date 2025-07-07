@@ -1,6 +1,24 @@
 #include "../headers/server.hpp"
 #include "../headers/client.hpp"
 
+void	parse_line(line)
+{
+	
+}
+
+void	handle_buff_line(char *buff)
+{
+	std::string	del = "\r\n";
+	size_t		pos;
+
+	while ((pos = buff.find(del)) != std::strin::npos)
+	{
+		std::string line = buff.substr(0, pos);
+		buff.erase(0, pos + del.length());
+		parse_line(line);
+	}
+}
+
 void    Server::init_socket()
 {
 	struct	sockaddr_in server;
@@ -68,7 +86,8 @@ void    Server::init_socket()
 						continue;
 					}
 					buff[read_size] = '\0';
-					std::cout << "Received: " << buff << std::endl;
+					handle_buff_line(buff);
+					// std::cout << "Received: " << buff << std::endl;
 				}
 				else if (poll_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
 				{
