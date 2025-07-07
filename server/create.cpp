@@ -1,8 +1,9 @@
-#include "headers/server.hpp"
+#include "../headers/server.hpp"
+#include "../headers/client.hpp"
 
 void    Server::init_socket()
 {
-	struct sockaddr_in server;
+	struct	sockaddr_in server;
 
 	this->socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (this->socket_fd == -1)
@@ -11,7 +12,7 @@ void    Server::init_socket()
 		exit(1);
 	}
 	server.sin_family = AF_INET;
-	server.sin_port = htons(6667);
+	server.sin_port = htons(port);
 	server.sin_addr.s_addr = INADDR_ANY;
 	if (bind(this->socket_fd, (struct sockaddr*)&server, sizeof(server)) != 0)
 	{
@@ -49,15 +50,16 @@ void    Server::init_socket()
 					new_client.fd = fd_client;
 					new_client.events = POLLIN;
 					poll_fds.push_back(new_client); //the new client have just added
+					std::cout << "A new client just connected!" << std::endl;
 				}
 			}
-			for (int i = 1; i < poll_fds.size(); ++i)
+			for (long unsigned int i = 1; i < poll_fds.size(); ++i)
 			{
 				if (poll_fds[i].revents & POLLIN)
 				{
 					char buff[512];
 					size_t read_size;
-					read_size = recv(socket_fds[i].fd, buff, sizeof(buff) - 1, 0);
+					read_size = recv(poll_fds[i].fd, buff, sizeof(buff) - 1, 0);
 					if (read_size <= 0)
 					{
 						close(poll_fds[i].fd);
@@ -66,17 +68,17 @@ void    Server::init_socket()
 						continue;
 					}
 					buff[read_size] = '\0';
+					std::cout << "Received: " << buff << std::endl;
 				}
 				else if (poll_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
 				{
 					std::cerr << "client error!" << std::endl;
 					close(poll_fds[i].fd);
-					poll_fds[i].erase(poll_fds.begin() + i);
+					poll_fds.erase(poll_fds.begin() + i);
 					--i;
 					continue;
 				}
 			}
 		}
 	}
-	
 }

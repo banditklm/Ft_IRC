@@ -1,4 +1,8 @@
-#include "headers/client.hpp"
+#include "../headers/client.hpp"
+
+Client::Client()
+{
+}
 
 Client::Client(int fd)
 {

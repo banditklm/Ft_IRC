@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <cstdlib>
 
 class Client
 {
@@ -15,6 +16,7 @@ class Client
 	std::vector<std::string> joinedChannels;
 
 	public :
+	Client();
 	Client(int fd);
 	~Client();
 	

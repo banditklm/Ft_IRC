@@ -5,6 +5,9 @@
 #include <sys/types.h>
 #include <vector>
 #include <map>
+#include <cstdlib>
+#include <fstream>
+#include <unistd.h>
 #include "client.hpp"
 #include <poll.h>
 #include <sys/socket.h>
