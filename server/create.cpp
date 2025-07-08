@@ -1,74 +1,125 @@
 #include "../headers/server.hpp"
 #include "../headers/client.hpp"
 
-void	welcome_msg(Client c)
+std::string	get_current_time()
 {
-
+	char	buff[100];
+	std::time_t now = std::time(NULL);
+	std::tm* time_info = std::localtime(&now);
+	std::strftime(buff, sizeof(buff), "%a %b %d %Y %H:%M:%S", time_info);
+	return (std::string(buff));
 }
 
-void	Server::handle_line(Client c, std::string line)
+void	Server::send_msg(Client& c, std::string msg)
+{
+	std::string	message;
+
+	message = ":" + this->name + " " + msg + "\r\n";
+	send(c.get_fd(), message.c_str(), message.length(), 0);
+}
+
+void	Server::welcome_msg(Client& c)
+{
+	std::string nick = c.get_nick();
+	std::string	user = c.get_user();
+	std::string name = this->name;
+	std::string	version = "1.0";
+	std::string date = get_current_time();
+	std::string	user_modes = "i";
+	std::string	chan_modes = "it";
+	send_msg(c, "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + name);
+	send_msg(c, "002 " + nick + " :Your host is " + name + ", running version " + version);
+	send_msg(c, "003 " + nick + " :This server was created " + date);
+	send_msg(c, "004 " + nick + " " + name + " " + version + " " + user_modes + " " + chan_modes);
+}
+
+void	Server::handle_line(Client& c, const std::string& line)
 {
 	std::stringstream	ss;
 	ss << line;
 	std::string	cmd;
-	std::string	pass;
-	std::string	user;
-	std::string	nick;
 	ss >> cmd;
 	if (cmd == "PASS")
 	{
+		std::string	pass;
 		ss >> pass;
 		if (pass.empty())
 		{
-			std::cout << "ERR_NEEDMOREPARAMS" << std::endl;
+			send_msg(c, "461 * PASS :Not enough parameters");
+			return;
+		}
+		if (c.is_registered())
+		{
+			send_msg(c, "462 * :You may not reregister");
+			return;
+		}
+		if (password != pass)
+		{
+			send_msg(c, "464 * :Password incorrect");
 			return;
 		}
 		c.set_pass(pass);
 	}
 	else if (cmd == "NICK")
 	{
+		std::string	nick;
 		ss >> nick;
 		if (nick.empty())
 		{
-			std::cout << "ERR_NEEDMOREPARAMS" << std::endl;
+			send_msg(c, "461 * NICK :Not enough parameters");
+			return;
+		}
+		if (c.is_registered())
+		{
+			send_msg(c, "462 * :You may not reregister");
 			return;
 		}
 		c.set_nick(nick);
-		c.has_nick = true;
+		c.set_has_nick(true);
 	}
 	else if (cmd == "USER")
 	{
-		ss >> user;
+		std::string	user, param1, param2, realname;
+		ss >> user >> param1 >> param2;
+		std::getline(ss, realname);
+		if(realname.empty() || realname[0] != ' ' || realname[1] != ':')
+		{
+			send_msg(c, "461 * :need more params");
+			return;
+		}
+		realname = realname.substr(2);
 		if (user.empty())
 		{
-			std::cout << "ERR_NEEDMOREPARAMS" << std::endl;
+			send_msg(c, "461 * USER :Not enough parameters");
+			return;
+		}
+		if (c.is_registered())
+		{
+			send_msg(c, "462 * :You may not reregister");
 			return;
 		}
 		c.set_user(user);
-		c.has_user = true;
+		c.set_realname(realname);
+		c.set_has_user(true);
 	}
-	// else
-	// {
-		// handle other commands
-	// }
-	if (c.has_nick && c.has_user && !c.registered)
+	if (c.get_has_nick() && c.get_has_user() && !c.is_registered())
 	{
-		c.registered = true;
+		c.set_registered(true);
 		welcome_msg(c);
 	}
-	else if (c.registered)
-		std::cout << "ERR_ALREADYREGISTRED" << std::endl;
 }
 
-void	handle_buff_line(std::string buff)
+void	Server::handle_buff_line(Client& c, const std::string& buff)
 {
+	c.buffer += buff;
 	std::string	del = "\r\n";
 	size_t		pos;
 
-	while ((pos = buff.find(del)) != std::string::npos)
+	while ((pos = c.buffer.find(del)) != std::string::npos)
 	{
-		std::string line = buff.substr(0, pos);
-		buff.erase(0, pos + del.length());
+		std::string line = c.buffer.substr(0, pos);
+		c.buffer.erase(0, pos + del.length());
+		handle_line(c, line);
 	}
 }
 
@@ -90,12 +141,12 @@ void    Server::init_socket()
 		std::cerr << "bind failed!" << std::endl;
 		exit(1);
 	}
-	if (listen(this->socket_fd, 13) != 0)
+	if (listen(this->socket_fd, SOMAXCONN) != 0)
 	{
 		std::cerr << "listen failed!" << std::endl;
 		exit(1);
 	}
-	pollfd listener;
+	struct pollfd listener;
 	listener.fd = socket_fd;
 	listener.events = POLLIN;
 	poll_fds.push_back(listener);
@@ -129,7 +180,7 @@ void    Server::init_socket()
 				if (poll_fds[i].revents & POLLIN)
 				{
 					char buff[512];
-					size_t read_size;
+					ssize_t read_size;
 					read_size = recv(poll_fds[i].fd, buff, sizeof(buff) - 1, 0);
 					if (read_size <= 0)
 					{
@@ -139,8 +190,8 @@ void    Server::init_socket()
 						continue;
 					}
 					buff[read_size] = '\0';
-					handle_buff_line(buff);
-					// std::cout << "Received: " << buff << std::endl;
+					
+					handle_buff_line(clients[poll_fds[i].fd], buff);
 				}
 				else if (poll_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
 				{

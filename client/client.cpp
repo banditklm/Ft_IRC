@@ -22,6 +22,11 @@ void    Client::set_nick(std::string nickname)
     has_nick = true;
 }
 
+void    Client::set_realname(std::string realname)
+{
+    this->realname = realname;
+}
+
 void    Client::set_user(std::string username)
 {
     this->username = username;
@@ -31,4 +36,54 @@ void    Client::set_user(std::string username)
 void    Client::set_pass(std::string password)
 {
     this->password = password;
+}
+
+void    Client::set_has_nick(bool b)
+{
+    has_nick = b;
+}
+
+void    Client::set_has_user(bool b)
+{
+    has_user = b;
+}
+
+void    Client::set_registered(bool b)
+{
+    registered = b;
+}
+
+std::string Client::get_nick()
+{
+    return (nickname);
+}
+
+std::string Client::get_user()
+{
+    return (username);
+}
+
+std::string Client::get_realname()
+{
+    return (realname);
+}
+
+bool    Client::get_has_nick()
+{
+    return (has_nick);
+}
+
+bool    Client::get_has_user()
+{
+    return (has_user);
+}
+
+bool    Client::is_registered()
+{
+    return (registered);
+}
+
+int Client::get_fd()
+{
+    return (fd);
 }
