@@ -33,17 +33,18 @@ void	Server::welcome_msg(Client& c)
 	send_msg(c, "004 " + nick + " " + name + " " + version + " " + user_modes + " " + chan_modes);
 }
 
-void	Server::handle_line(Client& c, const std::string& line)
+void	Server::handle_line(Client& c, std::vector<std::string> cmd)
 {
-	std::stringstream	ss;
-	ss << line;
-	std::string	cmd;
-	ss >> cmd;
-	std::cout << "line : " << line;
-	if (cmd == "PASS")
+	// std::stringstream	ss;
+	// ss << line;
+	// std::string	cmd;
+	// ss >> cmd;
+	// std::cout << "line : " << line;
+
+	if (cmd.size() == 2 && cmd[0] == "PASS")
 	{
 		std::string	pass;
-		ss >> pass;
+		pass = cmd[1];
 		if (pass.empty())
 		{
 			send_msg(c, "461 * PASS :Not enough parameters");
@@ -61,10 +62,10 @@ void	Server::handle_line(Client& c, const std::string& line)
 		}
 		c.set_pass(pass);
 	}
-	else if (cmd == "NICK")
+	else if (cmd.size() == 2 && cmd[0] == "NICK")
 	{
 		std::string	nick;
-		ss >> nick;
+		nick = cmd[1];
 		if (nick.empty())
 		{
 			send_msg(c, "461 * NICK :Not enough parameters");
@@ -78,14 +79,21 @@ void	Server::handle_line(Client& c, const std::string& line)
 		c.set_nick(nick);
 		c.set_has_nick(true);
 	}
-	else if (cmd == "USER")
+	else if (cmd[0] == "USER")
 	{
-		std::string	user, param1, param2, realname;
-		ss >> user >> param1 >> param2;
-		std::getline(ss, realname);
+		std::string user = cmd[0];
+		std::string param1 = cmd[1];
+		std::string param2 = cmd[2];
+		std::string realname;
+		for (size_t i = 3; i < cmd.size(); ++i)
+		{
+			realname += cmd[i];
+			if (i != cmd.size() - 1)
+				realname += " ";
+		}
 		if(realname.empty() || realname[0] != ' ' || realname[1] != ':')
 		{
-			send_msg(c, "4	61 * :need more params");
+			send_msg(c, "461 * :need more params");
 			return;
 		}
 		realname = realname.substr(2);
@@ -121,11 +129,11 @@ std::vector<std::string> split(const std::string& input) {
 
 void	Server::handle_buff_line(Client& c, const std::string& buff)
 {
-	std::cout << "entred" << buff <<  std::endl;
+	// std::cout << "entred" << buff <<  std::endl;
 	c.buffer += buff;
 	std::vector<std::string> cmd = split(buff);
 
-	handle_line(c, )
+	handle_line(c, cmd);
 }
 
 void    Server::init_socket()

@@ -31,7 +31,7 @@ class Server
 	Server(int port, std::string password);
 	~Server();
 	void    init_socket();
-	void	handle_line(Client& c, const std::string& line);
+	void	handle_line(Client& c, std::vector<std::string> cmd);
 	void	handle_buff_line(Client& c, const std::string& buff);
 	void	welcome_msg(Client& c);
 	void	send_msg(Client& c, std::string msg);
