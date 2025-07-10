@@ -81,17 +81,17 @@ void	Server::handle_line(Client& c, std::vector<std::string> cmd)
 	}
 	else if (cmd[0] == "USER")
 	{
-		std::string user = cmd[0];
-		std::string param1 = cmd[1];
-		std::string param2 = cmd[2];
+		std::string user = cmd[1];
+		std::string param1 = cmd[2];
+		std::string param2 = cmd[3];
 		std::string realname;
-		for (size_t i = 3; i < cmd.size(); ++i)
+		for (size_t i = 4; i < cmd.size(); ++i)
 		{
 			realname += cmd[i];
 			if (i != cmd.size() - 1)
 				realname += " ";
 		}
-		if(realname.empty() || realname[0] != ' ' || realname[1] != ':')
+		if(realname.empty())
 		{
 			send_msg(c, "461 * :need more params");
 			return;
