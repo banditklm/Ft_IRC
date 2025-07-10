@@ -39,6 +39,7 @@ void	Server::handle_line(Client& c, const std::string& line)
 	ss << line;
 	std::string	cmd;
 	ss >> cmd;
+	std::cout << "line : " << line;
 	if (cmd == "PASS")
 	{
 		std::string	pass;
@@ -84,7 +85,7 @@ void	Server::handle_line(Client& c, const std::string& line)
 		std::getline(ss, realname);
 		if(realname.empty() || realname[0] != ' ' || realname[1] != ':')
 		{
-			send_msg(c, "461 * :need more params");
+			send_msg(c, "4	61 * :need more params");
 			return;
 		}
 		realname = realname.substr(2);
@@ -109,18 +110,22 @@ void	Server::handle_line(Client& c, const std::string& line)
 	}
 }
 
+std::vector<std::string> split(const std::string& input) {
+	std::istringstream iss(input);
+	std::vector<std::string> result;
+	std::string word;
+	while (iss >> word)
+		result.push_back(word);
+	return result;
+}
+
 void	Server::handle_buff_line(Client& c, const std::string& buff)
 {
+	std::cout << "entred" << buff <<  std::endl;
 	c.buffer += buff;
-	std::string	del = "\r\n";
-	size_t		pos;
+	std::vector<std::string> cmd = split(buff);
 
-	while ((pos = c.buffer.find(del)) != std::string::npos)
-	{
-		std::string line = c.buffer.substr(0, pos);
-		c.buffer.erase(0, pos + del.length());
-		handle_line(c, line);
-	}
+	handle_line(c, )
 }
 
 void    Server::init_socket()
@@ -181,7 +186,7 @@ void    Server::init_socket()
 				{
 					char buff[512];
 					ssize_t read_size;
-					read_size = recv(poll_fds[i].fd, buff, sizeof(buff) - 1, 0);
+					read_size = recv(poll_fds[i].fd, buff, sizeof(buff), 0);
 					if (read_size <= 0)
 					{
 						close(poll_fds[i].fd);
@@ -191,6 +196,10 @@ void    Server::init_socket()
 					}
 					buff[read_size] = '\0';
 					
+					// std::cout << "buff2 : ";
+					// std::cout << "buff : " << buff << std::endl ;
+					// std::cout << "buff3 : ";
+					// std::cout.flush();
 					handle_buff_line(clients[poll_fds[i].fd], buff);
 				}
 				else if (poll_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))

@@ -5,6 +5,7 @@
 #include <sstream>
 #include <sys/types.h>
 #include <vector>
+#include <string>
 #include <map>
 #include <cstdlib>
 #include <fstream>
