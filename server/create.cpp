@@ -146,6 +146,7 @@ void    Server::init_socket()
 		std::cerr << "socket failed!" << std::endl;
 		exit(1);
 	}
+
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);
 	server.sin_addr.s_addr = INADDR_ANY;
@@ -163,6 +164,7 @@ void    Server::init_socket()
 	listener.fd = socket_fd;
 	listener.events = POLLIN;
 	poll_fds.push_back(listener);
+	std::cout << "Server started and waiting for connections!" << std::endl;
 	while (true)
 	{
 		int res;
