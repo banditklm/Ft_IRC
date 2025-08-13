@@ -109,11 +109,12 @@ ft_irc/
 ```
 ## 📚 References
 - [RFC 1459 — Internet Relay Chat Protocol](https://datatracker.ietf.org/doc/html/rfc1459)
-- [Beej's Guide to Network Programming](https://beej.us/guide/bgnet/)
+- [Guide to Network Programming]((https://www.tutorialspoint.com/unix_sockets/socket_core_functions.htm))
 - [IRC Command Reference](https://modern.ircdocs.horse/)
 
 ## 👨‍💻 Authors
 - **Kaltoum Elmounjid** — [GitHub](https://github.com/banditklm)
+
 
 
 
