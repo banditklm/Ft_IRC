@@ -2,11 +2,12 @@ NAME = ircserv
 
 CC = c++
 
-FLAGS = -Wall -Werror -Wextra -std=c++98
+FLAGS =  -fsanitize=address -Wall -Werror -Wextra
 
-SRC = src/main.cpp src/parse.cpp server/server.cpp server/create.cpp client/client.cpp
-
-HDR = headers/server.hpp headers/client.hpp headers/irc.hpp
+SRC = src/main.cpp src/parse.cpp server/server.cpp server/create.cpp client/client.cpp client/Channel.cpp \
+	server/cmds/bot.cpp server/cmds/ft_invite.cpp server/cmds/ft_kick.cpp server/cmds/ft_privmsg.cpp \
+	server/cmds/ft_join.cpp server/cmds/ft_mode.cpp server/cmds/ft_topic.cpp server/handel_line.cpp
+HDR = headers/server.hpp headers/client.hpp headers/irc.hpp headers/channel.hpp
 
 OBJ = $(SRC:.cpp=.o)
 

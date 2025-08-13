@@ -1,124 +1,42 @@
 #include "../headers/server.hpp"
 #include "../headers/client.hpp"
+const char *RESET = "\033[0m";
+const char *BOLD = "\033[1m";
+const char *CYAN = "\033[36m";
+const char *YELLOW = "\033[33m";
+const char *GREEN = "\033[32m";
 
-std::string	get_current_time()
+std::string get_current_time()
 {
-	char	buff[100];
+	char buff[100];
 	std::time_t now = std::time(NULL);
-	std::tm* time_info = std::localtime(&now);
+	std::tm *time_info = std::localtime(&now);
 	std::strftime(buff, sizeof(buff), "%a %b %d %Y %H:%M:%S", time_info);
 	return (std::string(buff));
 }
 
-void	Server::send_msg(Client& c, std::string msg)
+void Server::send_msg(Client &c, std::string msg)
 {
-	std::string	message;
-
-	message = ":" + this->name + " " + msg + "\r\n";
-	send(c.get_fd(), message.c_str(), message.length(), 0);
+	send(c.get_fd(), msg.c_str(), msg.length(), 0);
 }
 
-void	Server::welcome_msg(Client& c)
+void Server::welcome_msg(Client &c)
 {
 	std::string nick = c.get_nick();
-	std::string	user = c.get_user();
+	std::string user = c.get_user();
 	std::string name = this->name;
-	std::string	version = "1.0";
+	std::string version = "1.0";
 	std::string date = get_current_time();
-	std::string	user_modes = "i";
-	std::string	chan_modes = "it";
-	send_msg(c, "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + name);
-	send_msg(c, "002 " + nick + " :Your host is " + name + ", running version " + version);
-	send_msg(c, "003 " + nick + " :This server was created " + date);
-	send_msg(c, "004 " + nick + " " + name + " " + version + " " + user_modes + " " + chan_modes);
+	std::string user_modes = "i";
+	std::string chan_modes = "it";
+	send_msg(c, std::string(":irc.com ") + "001 " + nick + " :Welcome to the Internet Relay Network " + nick + "!" + user + "@" + name + "\r\n");
+	send_msg(c, std::string(":irc.com ") + "002 " + nick + " :Your host is " + name + ", running version " + version + "\r\n");
+	send_msg(c, std::string(":irc.com ") + "003 " + nick + " :This server was created " + date + "\r\n");
+	send_msg(c, std::string(":irc.com ") + "004 " + nick + " " + name + " " + version + " " + user_modes + " " + chan_modes + "\r\n");
 }
 
-void	Server::handle_line(Client& c, std::vector<std::string> cmd)
+std::vector<std::string> split(const std::string &input)
 {
-	// std::stringstream	ss;
-	// ss << line;
-	// std::string	cmd;
-	// ss >> cmd;
-	// std::cout << "line : " << line;
-
-	if (cmd.size() == 2 && cmd[0] == "PASS")
-	{
-		std::string	pass;
-		pass = cmd[1];
-		if (pass.empty())
-		{
-			send_msg(c, "461 * PASS :Not enough parameters");
-			return;
-		}
-		if (c.is_registered())
-		{
-			send_msg(c, "462 * :You may not reregister");
-			return;
-		}
-		if (password != pass)
-		{
-			send_msg(c, "464 * :Password incorrect");
-			return;
-		}
-		c.set_pass(pass);
-	}
-	else if (cmd.size() == 2 && cmd[0] == "NICK")
-	{
-		std::string	nick;
-		nick = cmd[1];
-		if (nick.empty())
-		{
-			send_msg(c, "461 * NICK :Not enough parameters");
-			return;
-		}
-		if (c.is_registered())
-		{
-			send_msg(c, "462 * :You may not reregister");
-			return;
-		}
-		c.set_nick(nick);
-		c.set_has_nick(true);
-	}
-	else if (cmd[0] == "USER")
-	{
-		std::string user = cmd[1];
-		std::string param1 = cmd[2];
-		std::string param2 = cmd[3];
-		std::string realname;
-		for (size_t i = 4; i < cmd.size(); ++i)
-		{
-			realname += cmd[i];
-			if (i != cmd.size() - 1)
-				realname += " ";
-		}
-		if(realname.empty())
-		{
-			send_msg(c, "461 * :need more params");
-			return;
-		}
-		realname = realname.substr(2);
-		if (user.empty())
-		{
-			send_msg(c, "461 * USER :Not enough parameters");
-			return;
-		}
-		if (c.is_registered())
-		{
-			send_msg(c, "462 * :You may not reregister");
-			return;
-		}
-		c.set_user(user);
-		c.set_realname(realname);
-		c.set_has_user(true);
-	}
-	if (c.get_has_nick() && c.get_has_user() && !c.is_registered())
-	{
-		c.set_registered(true);
-		welcome_msg(c);
-	}
-}
-
-std::vector<std::string> split(const std::string& input) {
 	std::istringstream iss(input);
 	std::vector<std::string> result;
 	std::string word;
@@ -127,36 +45,117 @@ std::vector<std::string> split(const std::string& input) {
 	return result;
 }
 
-void	Server::handle_buff_line(Client& c, const std::string& buff)
+std::vector<std::string> splitByComma(const std::string &input)
 {
-	// std::cout << "entred" << buff <<  std::endl;
-	c.buffer += buff;
-	std::vector<std::string> cmd = split(buff);
-
-	handle_line(c, cmd);
+	std::vector<std::string> tokens;
+	std::stringstream ss(input);
+	std::string token;
+	while (std::getline(ss, token, ','))
+	{
+		tokens.push_back(token);
+	}
+	return tokens;
 }
 
-void    Server::init_socket()
+void Server::handle_buff_line(Client &c, const std::string &buff)
 {
-	struct	sockaddr_in server;
+	c.buffer += buff;
+	size_t pos;
+	if ((pos = c.buffer.find("\n")) == std::string::npos)
+	{
+		return;
+	}
+	while ((pos = c.buffer.find("\n")) != std::string::npos)
+	{
+		std::string line = c.buffer.substr(0, pos);
+		c.buffer.erase(0, pos + 1);
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+		std::vector<std::string> cmd = split(line);
+		execute_cmd(c, cmd);
+	}
+}
 
+void displayHelps()
+{
+	std::cout << BOLD << CYAN << "[============= IRC MANUAL =============]" << RESET << "\n"
+			  << BOLD << "Available Commands:" << RESET << "\n\n"
+
+			  << YELLOW << "PASS <password>" << RESET << "\n"
+			  << "  - Authenticate yourself with the server using a password.\n"
+			  << "  - Must be sent before NICK/USER if required by the server.\n\n"
+
+			  << YELLOW << "USER <username> <unused> <unused> <realname>" << RESET << "\n"
+			  << "  - Register a new user with the server.\n"
+			  << "  - Example: USER john localhost server :John Doe\n\n"
+
+			  << YELLOW << "NICK <nickname>" << RESET << "\n"
+			  << "  - Set or change your nickname.\n"
+			  << "  - Example: NICK coolguy123\n\n"
+
+			  << YELLOW << "JOIN <#channel>" << RESET << "\n"
+			  << "  - Join a channel or create one if it doesn't exist.\n"
+			  << "  - Example: JOIN #general\n\n"
+
+			  << YELLOW << "INVITE <nickname> <#channel>" << RESET << "\n"
+			  << "  - Invite a user to a channel you are in (must be an operator).\n"
+			  << "  - Example: INVITE alice #general\n\n"
+
+			  << YELLOW << "KICK <#channel> <user> [<reason>]" << RESET << "\n"
+			  << "  - Remove a user from a channel (must be an operator).\n"
+			  << "  - Example: KICK #general bob :spamming\n\n"
+
+			  << YELLOW << "MODE <channel> <flags> [<params>]" << RESET << "\n"
+			  << "  - Change or view the mode of a channel.\n"
+			  << "  - Modes control channel settings (e.g., +i, +t, +o).\n"
+			  << "  - Example: MODE #general +o alice  (makes alice an operator)\n"
+			  << "  - Example: MODE #general           (shows current modes)\n\n"
+
+			  << YELLOW << "TOPIC <channel> [<topic>]" << RESET << "\n"
+			  << "  - View or set the topic of a channel.\n"
+			  << "  - Without <topic>: shows the current topic.\n"
+			  << "  - With <topic>: sets the new topic (if allowed).\n"
+			  << "  - Example: TOPIC #general :Welcome to our channel!\n\n"
+
+			  << YELLOW << "PRIVMSG <target> :<message>" << RESET << "\n"
+			  << "  - Send a private message to a user or channel.\n"
+			  << "  - <target> can be a nickname or channel name.\n"
+			  << "  - Example: PRIVMSG bob :Hello Bob!\n"
+			  << "  - Example: PRIVMSG #general :Hello everyone!\n\n"
+
+			  << BOLD << CYAN << "[=======================================]" << RESET << "\n";
+}
+void Server::init_socket()
+{
+	struct sockaddr_in server;
 	this->socket_fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (this->socket_fd == -1)
 	{
 		std::cerr << "socket failed!" << std::endl;
 		exit(1);
 	}
-
 	server.sin_family = AF_INET;
 	server.sin_port = htons(port);
 	server.sin_addr.s_addr = INADDR_ANY;
-	if (bind(this->socket_fd, (struct sockaddr*)&server, sizeof(server)) != 0)
+	int opt = 1;
+	if (setsockopt(this->socket_fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)))
 	{
+		close(this->socket_fd);
+		std::cerr << "setsockopt failed!" << std::endl;
+		exit(1);
+	}
+
+	if (bind(this->socket_fd, (struct sockaddr *)&server, sizeof(server)) != 0)
+	{
+		close(this->socket_fd);
 		std::cerr << "bind failed!" << std::endl;
 		exit(1);
 	}
+	std::cout << "Welcom To Our Server" << std::endl;
+	displayHelps();
 	if (listen(this->socket_fd, SOMAXCONN) != 0)
 	{
+		close(this->socket_fd);
 		std::cerr << "listen failed!" << std::endl;
 		exit(1);
 	}
@@ -164,7 +163,6 @@ void    Server::init_socket()
 	listener.fd = socket_fd;
 	listener.events = POLLIN;
 	poll_fds.push_back(listener);
-	std::cout << "Server started and waiting for connections!" << std::endl;
 	while (true)
 	{
 		int res;
@@ -183,10 +181,10 @@ void    Server::init_socket()
 				else
 				{
 					clients[fd_client] = Client(fd_client);
-					pollfd	new_client;
+					pollfd new_client;
 					new_client.fd = fd_client;
 					new_client.events = POLLIN;
-					poll_fds.push_back(new_client); //the new client have just added
+					poll_fds.push_back(new_client);
 					std::cout << "A new client just connected!" << std::endl;
 				}
 			}
@@ -195,33 +193,20 @@ void    Server::init_socket()
 				if (poll_fds[i].revents & POLLIN)
 				{
 					char buff[512];
+					memset(buff, 0, 512);
 					ssize_t read_size;
 					read_size = recv(poll_fds[i].fd, buff, sizeof(buff), 0);
 					if (read_size <= 0)
 					{
+						leave_channels(clients[poll_fds[i].fd]);
 						close(poll_fds[i].fd);
 						poll_fds.erase(poll_fds.begin() + i);
 						--i;
 						continue;
 					}
-					buff[read_size] = '\0';
-					
-					// std::cout << "buff2 : ";
-					// std::cout << "buff : " << buff << std::endl ;
-					// std::cout << "buff3 : ";
-					// std::cout.flush();
 					handle_buff_line(clients[poll_fds[i].fd], buff);
-				}
-				else if (poll_fds[i].revents & (POLLHUP | POLLERR | POLLNVAL))
-				{
-					std::cerr << "client error!" << std::endl;
-					close(poll_fds[i].fd);
-					poll_fds.erase(poll_fds.begin() + i);
-					--i;
-					continue;
 				}
 			}
 		}
 	}
 }
-
