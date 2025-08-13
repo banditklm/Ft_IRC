@@ -61,8 +61,14 @@ make
 ```
 ### Example server response:
 ```bash
-:irc.local 001 kaltoum :Welcome to the IRC network, kaltoum!kaltoum@127.0.0.1
-:irc.local 332 kaltoum #42network :This is the channel topic
+:irc.com 001 kaltoum :Welcome to the Internet Relay Network kaltoum!kaltoum@irc.com
+:irc.com 002 kaltoum :Your host is irc.com, running version 1.0
+:irc.com 003 kaltoum :This server was created Wed Aug 13 2025 18:44:56
+:irc.com 004 kaltoum irc.com 1.0 i it
+:kaltoum!kaltoum@host JOIN :#42network
+:irc.com 353 kaltoum = #42network :@kaltoum
+:irc.com 366 kaltoum #42network :End of /NAMES list.
+
 ```
 
 ## 📜 Supported Commands
@@ -73,14 +79,11 @@ make
 | `NICK`    | Set nickname.                              |
 | `USER`    | Set username and real name.                |
 | `JOIN`    | Join a channel (`JOIN #channel`).          |
-| `PART`    | Leave a channel.                           |
 | `PRIVMSG` | Send private message to a user or channel. |
-| `NOTICE`  | Send a notice (no auto-reply).             |
 | `KICK`    | Kick a user from a channel.                |
 | `INVITE`  | Invite a user to a channel.                |
 | `TOPIC`   | Set or view channel topic.                 |
 | `MODE`    | Set channel/user modes.                    |
-| `QUIT`    | Disconnect from the server.                |
 
 ## 🔍 How It Works
 1. Startup — The server creates a socket, binds it to the given port, and starts listening for incoming connections.
@@ -111,6 +114,7 @@ ft_irc/
 
 ## 👨‍💻 Authors
 - **Kaltoum Elmounjid** — [GitHub](https://github.com/banditklm)
+
 
 
 
