@@ -31,7 +31,7 @@ This project was developed as part of the 42 school curriculum to practice:
 
 ### 1️⃣ Clone the repository
 ```bash
-git clone https://github.com/your-username/ft_irc.git
+git clone https://github.com/banditklm/Ft_IRC/.git
 cd ft_irc
 ```
 
@@ -114,6 +114,7 @@ ft_irc/
 
 ## 👨‍💻 Authors
 - **Kaltoum Elmounjid** — [GitHub](https://github.com/banditklm)
+
 
 
 
